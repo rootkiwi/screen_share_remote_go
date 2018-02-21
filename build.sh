@@ -1,32 +1,21 @@
 #!/bin/bash
 
-version="0.1.0"
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$PROJECT_DIR"
 
-for os in linux darwin; do
-    for arch in amd64 386; do
-        echo "building $os-$arch"
-        file="screen_share_remote_go-$version-$os-$arch"
-        env GOOS=$os GOARCH=$arch packr build -o build/$version/$file main.go
-        cd build/$version
-        tar -czf $file.tar.gz $file
-        rm $file
-        cd ../..
-    done
-done
+UID_GID="$(stat -c "%u:%g" .)"
+mkdir bin >/dev/null 2>&1
+chown "$UID_GID" bin
 
-for os in windows; do
-    for arch in amd64 386; do
-        echo "building $os-$arch"
-        file="screen_share_remote_go-$version-$os-$arch"
-        env GOOS=$os GOARCH=$arch packr build -o build/$version/$file.exe main.go
-        cd build/$version
-        zip -q $file.zip $file.exe
-        rm $file.exe
-        cd ../..
-    done
-done
+docker run --rm -it --user="$UID_GID" -v "$PWD":/go/src/github.com/rootkiwi/screen_share_remote_go \
+    rootkiwi/screen_share_remote_go:build go run build.go "$@"
 
-cd build/$version
-sha256sum * > sha256sum.txt
+EXPECTED_IMAGE_ID="sha256:d80d1144d9d1d5f379166763ecb72803f1ef10a9761b8bb38696d0542b005b96"
+ACTUAL_IMAGE_ID=$(docker inspect --format='{{.Id}}' rootkiwi/screen_share_remote_go:build)
 
-echo "done"
+if [ "$EXPECTED_IMAGE_ID" != "$ACTUAL_IMAGE_ID" ]
+then
+    echo
+    echo "docker build image outdated, run following to update:"
+    echo "docker pull rootkiwi/screen_share_remote_go:build"
+fi

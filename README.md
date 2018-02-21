@@ -85,14 +85,29 @@ location / {
 }
 ```
 
+## How to build
+Docker is used for building ([Dockerfile](https://github.com/rootkiwi/screen_share_remote_go/blob/master/Dockerfile))
+so make sure you have docker installed.
+
+For dependency management [dep](https://github.com/golang/dep) is used, but code is checked out in `vendor/` so dep is
+not required for building.
+
+Run following to output in `bin/release/<VERSION>`
+```
+./build.sh release
+```
+
+Run following to output in `bin/dev`
+```
+./build.sh
+```
+
 ## License
 [GNU General Public License 3 or later](https://www.gnu.org/licenses/gpl-3.0.html)
 
 See LICENSE for more details.
 
 ## 3RD Party Dependencies
-
-See also [LICENSES-3RD-PARTY](https://github.com/rootkiwi/screen_share_remote_go/tree/master/LICENSES-3RD-PARTY).
 
 ### Gorilla WebSocket
 
