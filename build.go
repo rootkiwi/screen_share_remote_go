@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 )
 
-const version = "0.1.0"
+const version = "0.1.1"
 
 func printUsage() {
 	fmt.Println("Usage building screen_share_remote_go:")
