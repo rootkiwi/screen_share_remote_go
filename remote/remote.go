@@ -13,6 +13,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/rootkiwi/screen_share_remote_go/conf"
 	"github.com/rootkiwi/screen_share_remote_go/password"
@@ -163,41 +164,55 @@ func readFrames(conn net.Conn, frames chan<- []byte) {
 	}
 }
 
+const timeoutDurationInitialTransfers = time.Second * 5
+
 // doInitialTransfers validates password and reads pageTitle from screen_share.
 func doInitialTransfers(passwordHash string, conn net.Conn) (pageTitle string, err error) {
 	const (
 		wrongPassword   = 0
 		correctPassword = 1
 	)
-	conn.Write([]byte("im_a_screen_share_remote_server_i_promise"))
+	conn.SetDeadline(time.Now().Add(timeoutDurationInitialTransfers))
+	if _, err := conn.Write([]byte("im_a_screen_share_remote_server_i_promise")); err != nil {
+		return "", err
+	}
 
 	clientPassword, err := readPassword(conn)
 	if err != nil {
 		return "", err
 	}
 	if !password.Validate(passwordHash, clientPassword) {
-		conn.Write([]byte{wrongPassword})
+		conn.SetDeadline(time.Now().Add(timeoutDurationInitialTransfers))
+		if _, err := conn.Write([]byte{wrongPassword}); err != nil {
+			return "", err
+		}
 		log.Printf("wrong password attempt from: %s\n", conn.RemoteAddr())
 		return "", err
 	}
-	conn.Write([]byte{correctPassword})
+	conn.SetDeadline(time.Now().Add(timeoutDurationInitialTransfers))
+	if _, err := conn.Write([]byte{correctPassword}); err != nil {
+		return "", err
+	}
 	log.Printf("correct password by: %s\n", conn.RemoteAddr())
 
 	pageTitle, err = readPageTitle(conn)
 	if err != nil {
 		return "", err
 	}
+	conn.SetDeadline(time.Time{})
 	return pageTitle, nil
 }
 
 func readPassword(conn net.Conn) ([]byte, error) {
 	passwordSizeSlice := make([]byte, 4)
+	conn.SetDeadline(time.Now().Add(timeoutDurationInitialTransfers))
 	_, err := io.ReadFull(conn, passwordSizeSlice)
 	if err != nil {
 		return nil, err
 	}
 	passwordSize := byteArrToInt(passwordSizeSlice)
 	clientPassword := make([]byte, passwordSize)
+	conn.SetDeadline(time.Now().Add(timeoutDurationInitialTransfers))
 	_, err = io.ReadFull(conn, clientPassword)
 	if err != nil {
 		return nil, err
@@ -207,12 +222,14 @@ func readPassword(conn net.Conn) ([]byte, error) {
 
 func readPageTitle(conn net.Conn) (string, error) {
 	titleSizeSlice := make([]byte, 4)
+	conn.SetDeadline(time.Now().Add(timeoutDurationInitialTransfers))
 	_, err := io.ReadFull(conn, titleSizeSlice)
 	if err != nil {
 		return "", err
 	}
 	titleSize := byteArrToInt(titleSizeSlice)
 	pageTitle := make([]byte, titleSize)
+	conn.SetDeadline(time.Now().Add(timeoutDurationInitialTransfers))
 	_, err = io.ReadFull(conn, pageTitle)
 	if err != nil {
 		return "", err
