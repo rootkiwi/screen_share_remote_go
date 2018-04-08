@@ -3,7 +3,7 @@ FROM golang:1.10-stretch
 RUN go get -d -v github.com/gobuffalo/packr/...; \
     cd /go/src/github.com/gobuffalo/packr/; \
     \
-    packr_version="1.10.4"; \
+    packr_version="1.10.7"; \
     \
     git checkout tags/v"$packr_version"; \
     go install ./...; \
