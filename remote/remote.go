@@ -39,6 +39,7 @@ func Listen(conf *conf.Config, done chan struct{}) {
 	}
 	newConn := make(chan accepted, 1)
 
+Loop:
 	for {
 		go func() {
 			conn, err := ln.Accept()
@@ -49,20 +50,22 @@ func Listen(conf *conf.Config, done chan struct{}) {
 			if conn.err != nil {
 				continue
 			}
-			handleConnection(conf, conn.conn, done)
+			if exit := handleConnection(conf, conn.conn, done); exit {
+				break Loop
+			}
 		case <-done:
-			done <- struct{}{}
-			return
+			break Loop
 		}
 	}
+	defer func() { done <- struct{}{} }()
 }
 
 // handleConnection handles connection from screen_share.
-func handleConnection(conf *conf.Config, conn net.Conn, done chan struct{}) {
+func handleConnection(conf *conf.Config, conn net.Conn, done chan struct{}) (exit bool) {
 	defer conn.Close()
 	pageTitle, err := doInitialTransfers(conf.PasswordHash, conn)
 	if err != nil {
-		return
+		return false
 	}
 	entering := make(chan webserver.FrameQueue)
 	leaving := make(chan webserver.FrameQueue, 10)
@@ -80,16 +83,16 @@ func handleConnection(conf *conf.Config, conn net.Conn, done chan struct{}) {
 		select {
 		case queue := <-entering:
 			if err := handleEntering(conn, frameQueues, queue); err != nil {
-				return
+				return false
 			}
 		case queue := <-leaving:
 			if err := handleLeaving(conn, frameQueues, queue); err != nil {
-				return
+				return false
 			}
 		case f, ok := <-frames:
 			if !ok {
 				closeFrameQueues()
-				return
+				return false
 			}
 			for queue, _ := range frameQueues {
 				isFull := len(queue) == cap(queue)
@@ -102,8 +105,7 @@ func handleConnection(conf *conf.Config, conn net.Conn, done chan struct{}) {
 			}
 		case <-done:
 			closeFrameQueues()
-			defer func() { done <- struct{}{} }()
-			return
+			return true
 		}
 	}
 }
