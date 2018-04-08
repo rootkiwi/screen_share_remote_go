@@ -16,7 +16,6 @@ import (
 	"encoding/pem"
 	"log"
 	"math/big"
-	mrand "math/rand"
 	"time"
 
 	"github.com/rootkiwi/screen_share_remote_go/byteutil"
@@ -64,10 +63,15 @@ func genKey() *rsa.PrivateKey {
 }
 
 func genCert(key *rsa.PrivateKey) []byte {
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		log.Fatalf("failed to generate serial number: %s", err)
+	}
 	// end of ASN.1 time
 	endOfTime := time.Date(2049, 12, 31, 23, 59, 59, 0, time.UTC)
 	template := x509.Certificate{
-		SerialNumber: new(big.Int).SetInt64(mrand.Int63()),
+		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			Organization: []string{"screen_share_remote_go"},
 		},
