@@ -74,7 +74,7 @@ func handleConnection(conf *conf.Config, conn net.Conn, done chan struct{}) (exi
 	defer webserver.Stop()
 	frameQueues := make(map[webserver.FrameQueue]struct{})
 	closeFrameQueues := func() {
-		for queue, _ := range frameQueues {
+		for queue := range frameQueues {
 			close(queue)
 		}
 	}
@@ -95,7 +95,7 @@ func handleConnection(conf *conf.Config, conn net.Conn, done chan struct{}) (exi
 				closeFrameQueues()
 				return false
 			}
-			for queue, _ := range frameQueues {
+			for queue := range frameQueues {
 				isFull := len(queue) == cap(queue)
 				if isFull {
 					close(queue)

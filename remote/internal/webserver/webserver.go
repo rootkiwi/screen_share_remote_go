@@ -35,7 +35,7 @@ func Start(port int, pageTitle string, entering, leaving chan<- FrameQueue) {
 	mux := http.NewServeMux()
 	mux.Handle("/", serveIndex(pageTitle))
 	mux.Handle("/js/", serveStaticJs())
-	mux.Handle("/css/", serveStaticCss())
+	mux.Handle("/css/", serveStaticCSS())
 	mux.Handle("/ws/", serveWs(entering, leaving))
 	server = &http.Server{Addr: ":" + strconv.Itoa(port), Handler: mux}
 	err := server.ListenAndServe()
@@ -58,11 +58,11 @@ func Stop() {
 func serveIndex(pageTitle string) http.Handler {
 	buf := new(bytes.Buffer)
 	indexTmpl.Execute(buf, pageTitle)
-	indexHtml := buf.String()
+	indexHTML := buf.String()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "", "/", "index.html":
-			w.Write([]byte(indexHtml))
+			w.Write([]byte(indexHTML))
 		default:
 			http.NotFound(w, r)
 		}
@@ -73,7 +73,7 @@ func serveStaticJs() http.Handler {
 	return http.StripPrefix("/js/", noDirListing(http.FileServer(js)))
 }
 
-func serveStaticCss() http.Handler {
+func serveStaticCSS() http.Handler {
 	return http.StripPrefix("/css/", noDirListing(http.FileServer(css)))
 }
 

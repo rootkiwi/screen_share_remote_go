@@ -7,7 +7,6 @@
 package portutil
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 )
@@ -15,10 +14,10 @@ import (
 func Parse(s string) (port int, err error) {
 	port, err = strconv.Atoi(s)
 	if err != nil {
-		return 0, errors.New(fmt.Sprintf("%q (not a number)", s))
+		return 0, fmt.Errorf("%q (not a number)", s)
 	}
 	if port < 0 || port > 65535 {
-		return 0, errors.New(fmt.Sprintf("%q (0-65535)", s))
+		return 0, fmt.Errorf("%q (0-65535)", s)
 	}
 	return port, nil
 }

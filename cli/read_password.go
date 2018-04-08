@@ -33,16 +33,14 @@ func readPasswordHash() (passwordHash string) {
 			randomPassword := password.GenRandom()
 			fmt.Printf("\npassword:\n%s\n", randomPassword)
 			return password.Hash(randomPassword)
-		} else {
-			passAgain := readPassword("3. enter password again: ")
-			if bytes.Equal(pass, passAgain) {
-				byteutil.ClearBytes(passAgain)
-				return password.Hash(pass)
-			} else {
-				fmt.Print("password did not match\n\n")
-				byteutil.ClearBytes(pass)
-				byteutil.ClearBytes(passAgain)
-			}
 		}
+		passAgain := readPassword("3. enter password again: ")
+		if bytes.Equal(pass, passAgain) {
+			byteutil.ClearBytes(passAgain)
+			return password.Hash(pass)
+		}
+		fmt.Print("password did not match\n\n")
+		byteutil.ClearBytes(pass)
+		byteutil.ClearBytes(passAgain)
 	}
 }
