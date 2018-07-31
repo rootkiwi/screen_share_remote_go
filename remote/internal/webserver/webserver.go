@@ -83,6 +83,9 @@ func noDirListing(h http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, ".wasm") {
+			w.Header().Set("Content-Type", "application/wasm")
+		}
 		h.ServeHTTP(w, r)
 	})
 }
